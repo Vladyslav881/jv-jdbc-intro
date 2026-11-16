@@ -25,6 +25,7 @@ public class BookDaoImpl implements BookDao {
         book.setPrice(resultSet.getBigDecimal("price"));
         return book;
     }
+
     @Override
     public Book create(Book book) {
         String sql = "INSERT INTO books (title, price) VALUES (?, ?)";
