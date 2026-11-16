@@ -1,6 +1,5 @@
 package mate.academy.dao.impl;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -18,12 +17,20 @@ import mate.academy.model.Book;
 
 @Dao
 public class BookDaoImpl implements BookDao {
+    private Book mapResultSetToBook(ResultSet resultSet)
+            throws SQLException {
+        Book book = new Book();
+        book.setId(resultSet.getObject("id", Long.class));
+        book.setTitle(resultSet.getString("title"));
+        book.setPrice(resultSet.getBigDecimal("price"));
+        return book;
+    }
     @Override
     public Book create(Book book) {
         String sql = "INSERT INTO books (title, price) VALUES (?, ?)";
         Properties dbProperties = new Properties();
         dbProperties.put("user","root");
-        dbProperties.put("password","15vlad0705");
+        dbProperties.put("password","0000");
         try (Connection connection = DriverManager
                 .getConnection("jdbc:mysql://localhost:3306/book_store", dbProperties);
                 PreparedStatement preparedStatement = connection.prepareStatement(
@@ -40,11 +47,13 @@ public class BookDaoImpl implements BookDao {
                     Long id = resultSet.getLong(1);
                     book.setId(id);
                 } else {
-                    throw new DataProcessingException("Failed to get the ID of the new book");
+                    throw new DataProcessingException(
+                            "Failed to get ID for book: " + book.getTitle());
                 }
             }
         } catch (SQLException e) {
-            throw new DataProcessingException("Can't add new books", e);
+            throw new DataProcessingException(
+                    "Can't create book: " + book.getTitle(), e);
         }
         return book;
     }
@@ -54,24 +63,19 @@ public class BookDaoImpl implements BookDao {
         String sql = "SELECT * FROM books WHERE id = ?";
         Properties dbProperties = new Properties();
         dbProperties.put("user","root");
-        dbProperties.put("password","15vlad0705");
+        dbProperties.put("password","0000");
         try (Connection connection = DriverManager
                 .getConnection("jdbc:mysql://localhost:3306/book_store", dbProperties);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setLong(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    String title = resultSet.getString("title");
-                    BigDecimal price = resultSet.getBigDecimal("price");
-                    Book book = new Book();
-                    book.setId(id);
-                    book.setTitle(title);
-                    book.setPrice(price);
-                    return Optional.of(book);
+                    return Optional.of(mapResultSetToBook(resultSet));
                 }
             }
         } catch (SQLException e) {
-            throw new DataProcessingException("Can not create a connection to the DB", e);
+            throw new DataProcessingException(
+                    "Can't find book with id: " + id, e);
         }
         return Optional.empty();
     }
@@ -82,24 +86,18 @@ public class BookDaoImpl implements BookDao {
         String sql = "SELECT * FROM books";
         Properties dbProperties = new Properties();
         dbProperties.put("user","root");
-        dbProperties.put("password","15vlad0705");
+        dbProperties.put("password","0000");
         try (Connection connection = DriverManager
                 .getConnection("jdbc:mysql://localhost:3306/book_store", dbProperties);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    Long id = resultSet.getLong("id");
-                    String title = resultSet.getString("title");
-                    BigDecimal price = resultSet.getBigDecimal("price");
-                    Book book = new Book();
-                    book.setId(id);
-                    book.setTitle(title);
-                    book.setPrice(price);
-                    books.add(book);
+                    books.add(mapResultSetToBook(resultSet));
                 }
             }
         } catch (SQLException e) {
-            throw new DataProcessingException("Can not create a connection to the DB", e);
+            throw new DataProcessingException(
+                    "Can't get all books from DB", e);
         }
         return books;
     }
@@ -109,7 +107,7 @@ public class BookDaoImpl implements BookDao {
         String sql = "UPDATE books SET title = ?, price = ? WHERE id = ?";
         Properties dbProperties = new Properties();
         dbProperties.put("user","root");
-        dbProperties.put("password","15vlad0705");
+        dbProperties.put("password","0000");
         try (Connection connection = DriverManager
                 .getConnection("jdbc:mysql://localhost:3306/book_store", dbProperties);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -123,7 +121,8 @@ public class BookDaoImpl implements BookDao {
                         "Failed to update the book with id: " + book.getId());
             }
         } catch (SQLException e) {
-            throw new DataProcessingException("Can not create a connection to the DB", e);
+            throw new DataProcessingException(
+                    "Can't update book with id: " + book.getId(), e);
         }
         return book;
     }
@@ -133,7 +132,7 @@ public class BookDaoImpl implements BookDao {
         String sql = "DELETE FROM books WHERE id =?";
         Properties dbProperties = new Properties();
         dbProperties.put("user","root");
-        dbProperties.put("password","15vlad0705");
+        dbProperties.put("password","0000");
         try (Connection connection = DriverManager
                 .getConnection("jdbc:mysql://localhost:3306/book_store", dbProperties);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -141,7 +140,8 @@ public class BookDaoImpl implements BookDao {
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
-            throw new DataProcessingException("Can't delete book with id: " + id, e);
+            throw new DataProcessingException(
+                    "Can't delete book with id: " + id, e);
         }
     }
 }
